@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Legends RP Shops</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; border-radius: 0 !important; }
+
+    body {
+        font-family: 'Cairo', sans-serif;
+        background: transparent;
+        color: #d5dbe6;
+        overflow: hidden;
+        height: 100vh; width: 100vw;
+        display: flex; align-items: center; justify-content: center;
+        direction: rtl;
+    }
+
+    :root {
+        --bg-0: #0a0e16;
+        --bg-1: #0e1420;
+        --bg-2: #131b2b;
+        --line: rgba(59,130,246,0.14);
+        --blue: #3b82f6;
+        --blue-dim: rgba(59,130,246,0.12);
+        --blue-txt: #7db2ff;
+        --red: #ef4444;
+        --green: #22c55e;
+        --gold: #eab308;
+        --muted: #5c6980;
+    }
+
+    .app {
+        display: none;
+        width: 920px;
+        max-height: 84vh;
+        background: linear-gradient(170deg, var(--bg-0) 0%, var(--bg-1) 100%);
+        border: 1px solid var(--line);
+        border-top: 2px solid var(--blue);
+        box-shadow: 0 30px 90px rgba(0,0,0,0.85);
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* HEADER */
+    .header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(0,0,0,0.35);
+    }
+    .h-title { display: flex; align-items: center; gap: 12px; }
+    .h-badge {
+        width: 40px; height: 40px;
+        background: var(--blue-dim);
+        border: 1px solid var(--blue);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px;
+    }
+    .h-title h1 { font-size: 18px; font-weight: 800; color: #f0f4fb; }
+    .h-title .sub { font-size: 11px; color: var(--muted); }
+    .h-title .sub b { color: var(--blue-txt); }
+
+    .btn-x {
+        width: 34px; height: 34px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 15px; cursor: pointer;
+        transition: 0.15s;
+    }
+    .btn-x:hover { border-color: var(--red); color: var(--red); }
+
+    /* TABS */
+    .tabs { display: flex; border-bottom: 1px solid var(--line); background: rgba(0,0,0,0.2); }
+    .tab {
+        padding: 11px 22px;
+        font-size: 13px; font-weight: 700;
+        color: var(--muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: 0.15s;
+        user-select: none;
+    }
+    .tab:hover { color: #cfd8e6; }
+    .tab.active { color: var(--blue-txt); border-bottom-color: var(--blue); background: var(--blue-dim); }
+    .tab.hidden { display: none; }
+
+    .body { padding: 18px 24px; overflow-y: auto; flex: 1; min-height: 300px; }
+    .body::-webkit-scrollbar { width: 5px; }
+    .body::-webkit-scrollbar-thumb { background: var(--blue); }
+    .body::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* GENERIC */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .card {
+        background: var(--bg-2);
+        border: 1px solid var(--line);
+        padding: 10px;
+        display: flex; flex-direction: column; align-items: center; gap: 6px;
+        transition: 0.15s;
+    }
+    .card:hover { border-color: var(--blue); }
+    .card img { width: 52px; height: 52px; object-fit: contain; }
+    .card .nm { font-size: 12px; font-weight: 700; color: #e5ebf5; text-align: center; }
+    .card .qt { font-size: 11px; color: var(--muted); }
+    .card .pr { font-size: 13px; font-weight: 800; color: var(--green); }
+
+    input, select {
+        background: var(--bg-0);
+        border: 1px solid var(--line);
+        color: #e5ebf5;
+        padding: 8px 10px;
+        font-family: 'Cairo', sans-serif;
+        font-size: 12px;
+        outline: none;
+        width: 100%;
+    }
+    input:focus, select:focus { border-color: var(--blue); }
+    input::placeholder { color: var(--muted); }
+
+    .btn {
+        background: var(--blue-dim);
+        border: 1px solid var(--blue);
+        color: var(--blue-txt);
+        padding: 8px 14px;
+        font-family: 'Cairo', sans-serif;
+        font-size: 12px; font-weight: 700;
+        cursor: pointer;
+        transition: 0.15s;
+        white-space: nowrap;
+    }
+    .btn:hover { background: var(--blue); color: #fff; }
+    .btn.red { border-color: var(--red); color: #ff8f8f; background: rgba(239,68,68,0.08); }
+    .btn.red:hover { background: var(--red); color: #fff; }
+    .btn.green { border-color: var(--green); color: #7ee6a2; background: rgba(34,197,94,0.08); }
+    .btn.green:hover { background: var(--green); color: #04170b; }
+    .btn.gold { border-color: var(--gold); color: #f5d76a; background: rgba(234,179,8,0.08); }
+    .btn.gold:hover { background: var(--gold); color: #211a02; }
+    .btn.sm { padding: 4px 9px; font-size: 11px; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .row { display: flex; gap: 8px; align-items: center; }
+    .sec-title {
+        font-size: 13px; font-weight: 800; color: var(--blue-txt);
+        margin: 14px 0 8px;
+        padding-right: 8px;
+        border-right: 3px solid var(--blue);
+    }
+    .sec-title:first-child { margin-top: 0; }
+    .empty { color: var(--muted); font-size: 12px; padding: 18px; text-align: center; border: 1px dashed var(--line); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { text-align: right; color: var(--muted); font-weight: 700; padding: 7px 8px; border-bottom: 1px solid var(--line); font-size: 11px; }
+    td { padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    tr:hover td { background: rgba(59,130,246,0.04); }
+
+    .tag { font-size: 10px; font-weight: 800; padding: 2px 8px; }
+    .tag.owner { background: rgba(234,179,8,0.15); color: var(--gold); border: 1px solid rgba(234,179,8,0.4); }
+    .tag.manager { background: var(--blue-dim); color: var(--blue-txt); border: 1px solid var(--blue); }
+    .tag.employee { background: rgba(255,255,255,0.05); color: #aab6c8; border: 1px solid rgba(255,255,255,0.15); }
+    .tag.open { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.4); }
+    .tag.closed { background: rgba(239,68,68,0.12); color: #ff8f8f; border: 1px solid rgba(239,68,68,0.4); }
+    .tag.grocery { background: rgba(34,197,94,0.1); color: #7ee6a2; border: 1px solid rgba(34,197,94,0.3); }
+    .tag.weapon { background: rgba(239,68,68,0.1); color: #ff9f9f; border: 1px solid rgba(239,68,68,0.3); }
+
+    /* SAFE PANEL */
+    .safe-box {
+        background: var(--bg-2);
+        border: 1px solid var(--line);
+        padding: 22px;
+        text-align: center;
+    }
+    .safe-box .amount { font-size: 34px; font-weight: 800; color: var(--green); direction: ltr; }
+    .safe-box .lbl { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+
+    /* CRAFT */
+    .recipe {
+        background: var(--bg-2);
+        border: 1px solid var(--line);
+        padding: 14px;
+        display: flex; align-items: center; gap: 14px;
+        margin-bottom: 10px;
+    }
+    .recipe img { width: 56px; height: 56px; object-fit: contain; }
+    .recipe .info { flex: 1; }
+    .recipe .info .nm { font-size: 14px; font-weight: 800; color: #f0f4fb; }
+    .recipe .mats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .mat { font-size: 10px; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); }
+    .mat.ok { border-color: rgba(34,197,94,0.4); color: #7ee6a2; }
+    .mat.no { border-color: rgba(239,68,68,0.4); color: #ff8f8f; }
+
+    /* two-col storage */
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .col-h { font-size: 12px; font-weight: 800; color: var(--blue-txt); margin-bottom: 8px; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .fld label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 700; }
+
+    .coord-row { display: grid; grid-template-columns: 90px 1fr 1fr 1fr 1fr auto auto; gap: 6px; align-items: center; margin-bottom: 6px; }
+    .coord-row .lbl { font-size: 11px; font-weight: 800; color: var(--blue-txt); }
+    .coord-row .btn.clear { background: #d32f2f; padding: 4px 8px; }
+    .coord-row .btn.clear:hover { background: #b71c1c; }
+
+    .notice {
+        background: var(--blue-dim);
+        border: 1px solid var(--blue);
+        color: var(--blue-txt);
+        padding: 10px 14px;
+        font-size: 12px;
+        margin-bottom: 12px;
+    }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+    <div class="header">
+        <div class="h-title">
+            <div class="h-badge" id="hIcon">🏪</div>
+            <div>
+                <h1 id="hTitle">المتجر</h1>
+                <div class="sub" id="hSub"></div>
+            </div>
+        </div>
+        <button class="btn-x" onclick="closeUI()">✕</button>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div class="body" id="body"></div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let STATE = { mode: null, data: null, items: [], tab: null };
+const RES = 'lt-shops';
+const post = (ev, data) => fetch(`https://${RES}/${ev}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data || {})
+});
+
+function closeUI() {
+    $('#app').style.display = 'none';
+    post('close');
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeUI(); });
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const img = (path, file) => `${path}${file || 'placeholder.png'}`;
+const money = (n) => '$' + Number(n || 0).toLocaleString();
+
+window.addEventListener('message', (e) => {
+    const m = e.data;
+    if (m.action === 'openManage')    openManage(m.data, m.items);
+    if (m.action === 'refreshManage') openManage(m.data, m.items, true);
+    if (m.action === 'openBuyer')     openBuyer(m.data);
+    if (m.action === 'refreshBuyer')  openBuyer(m.data, true);
+    if (m.action === 'openStorage')   openStorage(m.data, m.items);
+    if (m.action === 'refreshStorage')openStorage(m.data, m.items, true);
+    if (m.action === 'openCrafting')  openCrafting(m.data);
+    if (m.action === 'openAdmin')     openAdmin(m.data);
+    if (m.action === 'refreshAdmin')  openAdmin(m.data, true);
+});
+
+function show() { $('#app').style.display = 'flex'; }
+function setHeader(icon, title, sub) {
+    $('#hIcon').textContent = icon;
+    $('#hTitle').textContent = title;
+    $('#hSub').innerHTML = sub || '';
+}
+function buildTabs(list) {
+    $('#tabs').innerHTML = list.map((t, i) =>
+        `<div class="tab ${i === 0 ? 'active' : ''}" data-tab="${t.id}" onclick="switchTab('${t.id}')">${t.label}</div>`
+    ).join('');
+}
+function switchTab(id) {
+    STATE.tab = id;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === id));
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + id));
+}
+
+/* ═══════════════ MANAGE ═══════════════ */
+
+function openManage(res, items, keepTab) {
+    STATE = { mode: 'manage', data: res, items: items || [], tab: keepTab ? STATE.tab : null };
+    const s = res.shop, p = res.perms;
+    const typeAr = s.type === 'weapon' ? 'متجر أسلحة' : 'بقالة';
+    setHeader(s.type === 'weapon' ? '🔫' : '🏪', s.blip_name,
+        `${typeAr} #${s.id} &nbsp;|&nbsp; رتبتك: <b>${roleAr(res.role)}</b>` +
+        (s.type === 'weapon' ? ` &nbsp;|&nbsp; <span class="tag ${s.is_open ? 'open' : 'closed'}">${s.is_open ? 'مفتوح' : 'مغلق'}</span>` : ''));
+
+    const tabs = [];
+    if (p.listings) tabs.push({ id: 'listings', label: '🛒 المنتجات' });
+    if (p.staff)    tabs.push({ id: 'staff', label: '👥 الموظفين' });
+    if (p.safe)     tabs.push({ id: 'safe', label: '💰 الخزنة والأرباح' });
+    if (p.settings || p.toggle || p.license) tabs.push({ id: 'settings', label: '⚙️ الإعدادات' });
+    buildTabs(tabs);
+
+    let html = '';
+    if (p.listings) html += renderListingsView(res);
+    if (p.staff)    html += renderStaffView(res);
+    if (p.safe)     html += renderSafeView(res);
+    if (p.settings || p.toggle || p.license) html += renderSettingsView(res);
+    $('#body').innerHTML = html;
+
+    show();
+    switchTab(keepTab && STATE.tab ? STATE.tab : (tabs[0] && tabs[0].id));
+}
+
+function roleAr(r) { return r === 'owner' ? 'مالك' : r === 'manager' ? 'مدير' : 'موظف'; }
+
+function renderListingsView(res) {
+    const ip = res.imagePath;
+    const invOpts = STATE.items.map(i =>
+        `<option value="${esc(i.name)}" data-slot="${i.slot}" data-image="${esc(i.image)}" data-max="${i.amount}">${esc(i.label)} (x${i.amount})</option>`
+    ).join('');
+
+    const rows = (res.listings || []).map(l => `
+        <tr>
+            <td><div class="row"><img src="${img(ip, l.item_image)}" style="width:26px;height:26px" onerror="this.src='${ip}placeholder.png'"> ${esc(l.item_label)}</div></td>
+            <td>x${l.quantity}</td>
+            <td style="color:var(--green);font-weight:800" dir="ltr">${money(l.price)}</td>
+            <td>${esc(l.added_by || '-')}</td>
+            <td>
+                <div class="row" style="justify-content:flex-end">
+                    <input type="number" min="1" value="${l.price}" style="width:80px" id="pr_${l.id}">
+                    <button class="btn sm" onclick="updListing(${l.id})">تحديث السعر</button>
+                    <button class="btn sm red" onclick="rmListing(${l.id})">إزالة</button>
+                </div>
+            </td>
+        </tr>`).join('');
+
+    return `<div class="view" id="view-listings">
+        <div class="sec-title">إضافة منتج للبيع (من حقيبتك)</div>
+        <div class="row" style="margin-bottom:16px">
+            <select id="addItem" style="flex:2">${invOpts || '<option value="">حقيبتك فارغة</option>'}</select>
+            <input type="number" id="addQty" min="1" value="1" placeholder="الكمية" style="flex:1">
+            <input type="number" id="addPrice" min="1" placeholder="السعر للقطعة $" style="flex:1">
+            <button class="btn green" onclick="addListing()">+ إضافة للبيع</button>
+        </div>
+        <div class="sec-title">المنتجات المعروضة حالياً</div>
+        ${rows ? `<table><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>أضافه</th><th></th></tr>${rows}</table>` : '<div class="empty">لا توجد منتجات معروضة</div>'}
+    </div>`;
+}
+
+function addListing() {
+    const sel = $('#addItem');
+    if (!sel.value) return;
+    const opt = sel.options[sel.selectedIndex];
+    post('addListing', {
+        shopId: STATE.data.shop.id,
+        itemName: sel.value,
+        quantity: $('#addQty').value,
+        price: $('#addPrice').value,
+        slot: opt.dataset.slot,
+        image: opt.dataset.image,
+    });
+}
+function rmListing(id)  { post('removeListing', { shopId: STATE.data.shop.id, id }); }
+function updListing(id) { post('updateListing', { shopId: STATE.data.shop.id, id, price: $('#pr_' + id).value }); }
+
+function renderStaffView(res) {
+    const canManagers = res.perms.staff === true;
+    const rows = (res.employees || []).map(e => `
+        <tr>
+            <td>${esc(e.name)}</td>
+            <td><span class="tag ${e.grade}">${roleAr(e.grade)}</span></td>
+            <td>
+                <div class="row" style="justify-content:flex-end">
+                    ${canManagers ? `<button class="btn sm" onclick="setGrade('${esc(e.citizenid)}','${e.grade === 'manager' ? 'employee' : 'manager'}')">${e.grade === 'manager' ? 'تنزيل لموظف' : 'ترقية لمدير'}</button>` : ''}
+                    <button class="btn sm red" onclick="fireStaff('${esc(e.citizenid)}')">طرد</button>
+                </div>
+            </td>
+        </tr>`).join('');
+
+    return `<div class="view" id="view-staff">
+        <div class="sec-title">توظيف (اللاعب يجب أن يكون متصل)</div>
+        <div class="row" style="margin-bottom:16px">
+            <input type="number" id="hireId" placeholder="ID اللاعب" style="flex:1">
+            <select id="hireGrade" style="flex:1">
+                <option value="employee">موظف</option>
+                ${canManagers ? '<option value="manager">مدير</option>' : ''}
+            </select>
+            <button class="btn green" onclick="hireStaff()">+ توظيف</button>
+        </div>
+        <div class="sec-title">طاقم العمل</div>
+        ${rows ? `<table><tr><th>الاسم</th><th>الرتبة</th><th></th></tr>${rows}</table>` : '<div class="empty">لا يوجد موظفين</div>'}
+    </div>`;
+}
+function hireStaff() { post('hireStaff', { shopId: STATE.data.shop.id, targetId: $('#hireId').value, grade: $('#hireGrade').value }); }
+function fireStaff(cid) { post('fireStaff', { shopId: STATE.data.shop.id, citizenid: cid }); }
+function setGrade(cid, g) { post('setGrade', { shopId: STATE.data.shop.id, citizenid: cid, grade: g }); }
+
+function renderSafeView(res) {
+    const canWithdraw = res.perms.safe === true;
+    return `<div class="view" id="view-safe">
+        <div class="safe-box">
+            <div class="lbl">أرباح المتجر في الخزنة</div>
+            <div class="amount">${money(res.shop.safe)}</div>
+            ${canWithdraw ? `
+            <div class="row" style="margin-top:16px;justify-content:center">
+                <input type="number" id="safeAmt" min="1" placeholder="المبلغ" style="width:160px">
+                <button class="btn gold" onclick="withdrawSafe()">سحب كاش</button>
+            </div>` : '<div class="lbl" style="margin-top:10px">المالك فقط يمكنه السحب</div>'}
+        </div>
+        <div class="notice" style="margin-top:14px">⚠️ الخزنة قابلة للسرقة بالـ Lockpick إذا لم يكن أحد من طاقم المتجر متواجداً في المكان. اسحب أرباحك باستمرار!</div>
+    </div>`;
+}
+function withdrawSafe() { post('withdrawSafe', { shopId: STATE.data.shop.id, amount: $('#safeAmt').value }); }
+
+function renderSettingsView(res) {
+    const s = res.shop, p = res.perms;
+    let html = `<div class="view" id="view-settings">`;
+    if (p.settings) {
+        html += `<div class="sec-title">اسم المتجر على الخريطة (Blip)</div>
+        <div class="row" style="margin-bottom:16px">
+            <input type="text" id="blipName" value="${esc(s.blip_name)}" maxlength="60" style="flex:1">
+            <button class="btn" onclick="setBlipName()">حفظ الاسم</button>
+        </div>`;
+    }
+    if (s.type === 'weapon' && p.toggle) {
+        html += `<div class="sec-title">حالة المتجر</div>
+        <div class="row" style="margin-bottom:16px">
+            <span class="tag ${s.is_open ? 'open' : 'closed'}" style="font-size:12px;padding:6px 14px">${s.is_open ? 'المتجر مفتوح' : 'المتجر مغلق'}</span>
+            <button class="btn ${s.is_open ? 'red' : 'green'}" onclick="toggleOpen()">${s.is_open ? 'إغلاق المتجر' : 'فتح المتجر'}</button>
+        </div>
+        <div class="notice">لا يمكن لأحد الشراء والمتجر مغلق. افتح المتجر وتأكد من رخص الزبائن.</div>`;
+    }
+    if (s.type === 'weapon' && p.license) {
+        html += `<div class="sec-title">توقيع وإصدار رخصة سلاح (ورقة A4 موقعة)</div>
+        <div class="row" style="margin-bottom:8px">
+            <input type="number" id="licId" placeholder="ID اللاعب" style="flex:1">
+            <input type="text" id="licSig" placeholder="توقيعك (اسمك كمالك)" maxlength="50" style="flex:2">
+            <button class="btn gold" onclick="issueLicense()">✒️ توقيع وتسليم</button>
+        </div>
+        <div class="notice">الرخصة تُسلّم موقعة باسمك وتاريخ اليوم. بدون رخصة موقعة لا يستطيع أحد الشراء من متجرك.</div>`;
+    }
+    html += `</div>`;
+    return html;
+}
+function setBlipName() { post('setBlipName', { shopId: STATE.data.shop.id, name: $('#blipName').value }); }
+function toggleOpen()  { post('toggleOpen', { shopId: STATE.data.shop.id }); }
+function issueLicense() {
+    const id = $('#licId').value, sig = $('#licSig').value;
+    if (!id || !sig) return;
+    post('issueLicense', { shopId: STATE.data.shop.id, targetId: id, signature: sig });
+    $('#licId').value = ''; $('#licSig').value = '';
+}
+
+/* ═══════════════ BUYER ═══════════════ */
+
+function openBuyer(res, keep) {
+    STATE = { mode: 'buyer', data: res, items: [], tab: null };
+    const s = res.shop;
+    setHeader(s.type === 'weapon' ? '🔫' : '🛒', s.blip_name,
+        `${s.type === 'weapon' ? 'متجر أسلحة' : 'بقالة'}${s.owner ? ' &nbsp;|&nbsp; المالك: <b>' + esc(s.owner) + '</b>' : ''}`);
+    buildTabs([{ id: 'buy', label: '🛒 المنتجات' }]);
+
+    const ip = res.imagePath;
+    const cards = (res.listings || []).map(l => `
+        <div class="card">
+            <img src="${img(ip, l.item_image)}" onerror="this.src='${ip}placeholder.png'">
+            <div class="nm">${esc(l.item_label)}</div>
+            <div class="qt">المتوفر: x${l.quantity}</div>
+            <div class="pr" dir="ltr">${money(l.price)}</div>
+            <div class="row" style="width:100%">
+                <input type="number" min="1" max="${l.quantity}" value="1" id="bq_${l.id}" style="width:52px">
+                <button class="btn sm green" style="flex:1" onclick="buyItem(${l.id})">شراء</button>
+            </div>
+        </div>`).join('');
+
+    $('#body').innerHTML = `<div class="view active" id="view-buy">
+        ${cards ? `<div class="grid">${cards}</div>` : '<div class="empty">لا توجد منتجات للبيع حالياً</div>'}
+    </div>`;
+    show();
+}
+function buyItem(id) {
+    const q = $('#bq_' + id);
+    post('buyItem', { shopId: STATE.data.shop.id, id, quantity: q ? q.value : 1 });
+}
+
+/* ═══════════════ STORAGE ═══════════════ */
+
+function openStorage(res, items, keep) {
+    STATE = { mode: 'storage', data: res, items: items || [], tab: null };
+    setHeader('📦', 'مخزن المتجر', `${esc(res.shopLabel)} &nbsp;|&nbsp; ${res.canWithdraw ? 'إيداع وسحب' : '<b style="color:var(--gold)">إيداع فقط (موظف)</b>'}`);
+    buildTabs([{ id: 'st', label: '📦 المخزن' }]);
+
+    const ip = res.imagePath;
+    const inv = STATE.items.map(i => `
+        <tr>
+            <td><div class="row"><img src="${img(ip, i.image)}" style="width:24px;height:24px" onerror="this.src='${ip}placeholder.png'"> ${esc(i.label)}</div></td>
+            <td>x${i.amount}</td>
+            <td><div class="row" style="justify-content:flex-end">
+                <input type="number" min="1" max="${i.amount}" value="1" style="width:56px" id="dep_${esc(i.name)}">
+                <button class="btn sm green" onclick="depStore('${esc(i.name)}')">إيداع ⬅</button>
+            </div></td>
+        </tr>`).join('');
+
+    const store = (res.storage || []).map(s => `
+        <tr>
+            <td>${esc(s.item_label)}</td>
+            <td>x${s.amount}</td>
+            <td><div class="row" style="justify-content:flex-end">
+                ${res.canWithdraw ? `
+                <input type="number" min="1" max="${s.amount}" value="1" style="width:56px" id="wd_${esc(s.item_name)}">
+                <button class="btn sm" onclick="wdStore('${esc(s.item_name)}')">➡ سحب</button>` : '<span style="color:var(--muted);font-size:10px">-</span>'}
+            </div></td>
+        </tr>`).join('');
+
+    $('#body').innerHTML = `<div class="view active" id="view-st">
+        <div class="cols">
+            <div>
+                <div class="col-h">🎒 حقيبتك</div>
+                ${inv ? `<table><tr><th>العنصر</th><th>الكمية</th><th></th></tr>${inv}</table>` : '<div class="empty">حقيبتك فارغة</div>'}
+            </div>
+            <div>
+                <div class="col-h">📦 مخزن المتجر (مواد التصنيع والبضاعة)</div>
+                ${store ? `<table><tr><th>العنصر</th><th>الكمية</th><th></th></tr>${store}</table>` : '<div class="empty">المخزن فارغ</div>'}
+            </div>
+        </div>
+    </div>`;
+    show();
+}
+function depStore(name) { post('depositStorage', { shopId: STATE.data.shopId, itemName: name, amount: document.getElementById('dep_' + name).value }); }
+function wdStore(name)  { post('withdrawStorage', { shopId: STATE.data.shopId, itemName: name, amount: document.getElementById('wd_' + name).value }); }
+
+/* ═══════════════ CRAFTING ═══════════════ */
+
+function openCrafting(res) {
+    STATE = { mode: 'craft', data: res, items: [], tab: null };
+    setHeader('🔧', 'طاولة تصنيع الأسلحة', 'المواد تُسحب من <b>مخزن المتجر</b> - املأه أولاً');
+    buildTabs([{ id: 'cr', label: '🔧 التصنيع' }]);
+
+    const ip = res.imagePath;
+    const recipes = (res.recipes || []).map(r => `
+        <div class="recipe">
+            <img src="${img(ip, r.image)}" onerror="this.src='${ip}placeholder.png'">
+            <div class="info">
+                <div class="nm">${esc(r.label)}</div>
+                <div class="mats">
+                    ${r.materials.map(m => `<span class="mat ${m.have >= m.need ? 'ok' : 'no'}">${esc(m.label)}: ${m.have}/${m.need}</span>`).join('')}
+                </div>
+            </div>
+            <button class="btn ${r.canCraft ? 'green' : ''}" ${r.canCraft ? '' : 'disabled'} onclick="craft(${r.index})">
+                🔧 تصنيع (${Math.round(r.time / 1000)} ث)
+            </button>
+        </div>`).join('');
+
+    $('#body').innerHTML = `<div class="view active" id="view-cr">${recipes || '<div class="empty">لا توجد وصفات</div>'}</div>`;
+    show();
+}
+function craft(index) {
+    $('#app').style.display = 'none';
+    post('startCraft', { shopId: STATE.data.shopId, index });
+}
+
+/* ═══════════════ ADMIN ═══════════════ */
+
+function openAdmin(res, keep) {
+    STATE = { mode: 'admin', data: res, items: [], tab: keep ? STATE.tab : null, coords: (keep && STATE.coords) || {}, editShopId: null, editMode: false };
+    setHeader('🛡️', 'إدارة المتاجر', 'لوحة تحكم المشرفين');
+    const tabs = [{ id: 'ashops', label: '🏪 المتاجر' }, { id: 'acreate', label: '➕ إنشاء متجر' }, { id: 'alicense', label: '📜 رخص السلاح' }];
+    if (res.isSuper) tabs.push({ id: 'aadmins', label: '🛡️ المشرفين' });
+    buildTabs(tabs);
+
+    const shops = (res.shops || []).map(s => `
+        <tr>
+            <td>#${s.id}</td>
+            <td><span class="tag ${s.type}">${s.type === 'weapon' ? 'أسلحة' : 'بقالة'}</span></td>
+            <td>${esc(s.blip_name)}</td>
+            <td>${esc(s.owner_name || '—')}</td>
+            <td dir="ltr" style="color:var(--green)">${money(s.safe_money)}</td>
+            <td><span class="tag ${s.is_open ? 'open' : 'closed'}">${s.is_open ? 'مفتوح' : 'مغلق'}</span></td>
+            <td>
+                <div class="row" style="justify-content:flex-end">
+                    <input type="number" placeholder="ID" style="width:60px" id="own_${s.id}">
+                    <button class="btn sm" onclick="setOwner(${s.id})">تعيين مالك</button>
+                    <button class="btn sm gold" onclick="clearOwner(${s.id})">إزالة مالك</button>
+                    <button class="btn sm blue" onclick="editShopCoords(${s.id})">✏️ تعديل إحداثيات</button>
+                    <button class="btn sm red" onclick="delShop(${s.id})">حذف</button>
+                </div>
+            </td>
+        </tr>`).join('');
+
+    const coordRow = (key, label, req) => `
+        <div class="coord-row">
+            <span class="lbl">${label}${req ? ' *' : ''}</span>
+            <input type="number" step="0.0001" placeholder="x" id="c_${key}_x">
+            <input type="number" step="0.0001" placeholder="y" id="c_${key}_y">
+            <input type="number" step="0.0001" placeholder="z" id="c_${key}_z">
+            <input type="number" step="0.0001" placeholder="heading" id="c_${key}_w">
+            <button class="btn sm" onclick="grabCoords('${key}')" type="button">📍 موقعي</button>
+            <button class="btn sm clear" onclick="clearCoord('${key}')" type="button">🗑️</button>
+        </div>`;
+
+    let adminsHtml = '';
+    if (res.isSuper) {
+        const rows = (res.admins || []).map(a => `
+            <tr><td>${esc(a.name)}</td><td dir="ltr" style="color:var(--muted);font-size:10px">${esc(a.identifier)}</td>
+            <td><button class="btn sm red" onclick="rmAdmin('${esc(a.identifier)}')">إزالة</button></td></tr>`).join('');
+        adminsHtml = `<div class="view" id="view-aadmins">
+            <div class="sec-title">إضافة مشرف متاجر - بالـ ID داخل السيرفر أو Discord ID أو license (يقدر يفتح /shops)</div>
+            <div class="row" style="margin-bottom:16px">
+                <input type="text" id="admId" dir="ltr" placeholder="ID اللاعب / Discord ID / license:xxxx" style="width:320px">
+                <button class="btn green" onclick="addAdmin()">+ إضافة مشرف</button>
+            </div>
+            <div class="sec-title">المشرفين الحاليين</div>
+            ${rows ? `<table><tr><th>الاسم</th><th>CitizenID</th><th></th></tr>${rows}</table>` : '<div class="empty">لا يوجد مشرفين إضافيين</div>'}
+        </div>`;
+    }
+
+    $('#body').innerHTML = `
+    <div class="view" id="view-ashops">
+        ${shops ? `<table><tr><th>#</th><th>النوع</th><th>الاسم</th><th>المالك</th><th>الخزنة</th><th>الحالة</th><th></th></tr>${shops}</table>` : '<div class="empty">لا توجد متاجر</div>'}
+    </div>
+    <div class="view" id="view-acreate">
+        <div class="form-grid" style="margin-bottom:14px">
+            <div class="fld"><label>نوع المتجر</label>
+                <select id="newType" onchange="toggleCraftRow()">
+                    <option value="grocery">بقالة (مفتوح دائماً)</option>
+                    <option value="weapon">أسلحة (فتح/إغلاق + رخصة + تصنيع)</option>
+                </select>
+            </div>
+            <div class="fld"><label>اسم المتجر</label><input type="text" id="newLabel" placeholder="Grocery Store #2" maxlength="80"></div>
+        </div>
+        <div class="sec-title">النقاط - قف في المكان واضغط 📍 موقعي</div>
+        ${coordRow('seller', 'بائع/إدارة', true)}
+        ${coordRow('buyer', 'مشتري', true)}
+        ${coordRow('stash', 'مخزن/خزنة', true)}
+        <div id="craftRow" style="display:none">${coordRow('crafting', 'تصنيع', true)}</div>
+        <button class="btn green" style="margin-top:12px;width:100%" onclick="createShop()">✔ إنشاء المتجر</button>
+    </div>
+    <div class="view" id="view-acedit">
+        <div class="sec-title">تعديل إحداثيات المتجر #${STATE.editShopId || '?'} - قف في المكان واضغط 📍 موقعي</div>
+        <div style="display:grid;grid-template-columns:90px 1fr 1fr 1fr 1fr auto auto;gap:6px;align-items:center;margin-bottom:6px">
+            <span class="lbl">بائع/إدارة *</span>
+            <input type="number" step="0.0001" placeholder="x" id="ce_seller_x">
+            <input type="number" step="0.0001" placeholder="y" id="ce_seller_y">
+            <input type="number" step="0.0001" placeholder="z" id="ce_seller_z">
+            <input type="number" step="0.0001" placeholder="heading" id="ce_seller_w">
+            <button class="btn sm" onclick="grabCoordsEdit('seller')" type="button">📍 موقعي</button>
+            <button class="btn sm clear" onclick="clearCoordEdit('seller')" type="button">🗑️</button>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 1fr 1fr 1fr auto auto;gap:6px;align-items:center;margin-bottom:6px">
+            <span class="lbl">مشتري *</span>
+            <input type="number" step="0.0001" placeholder="x" id="ce_buyer_x">
+            <input type="number" step="0.0001" placeholder="y" id="ce_buyer_y">
+            <input type="number" step="0.0001" placeholder="z" id="ce_buyer_z">
+            <input type="number" step="0.0001" placeholder="heading" id="ce_buyer_w">
+            <button class="btn sm" onclick="grabCoordsEdit('buyer')" type="button">📍 موقعي</button>
+            <button class="btn sm clear" onclick="clearCoordEdit('buyer')" type="button">🗑️</button>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 1fr 1fr 1fr auto auto;gap:6px;align-items:center;margin-bottom:6px">
+            <span class="lbl">مخزن/خزنة *</span>
+            <input type="number" step="0.0001" placeholder="x" id="ce_stash_x">
+            <input type="number" step="0.0001" placeholder="y" id="ce_stash_y">
+            <input type="number" step="0.0001" placeholder="z" id="ce_stash_z">
+            <input type="number" step="0.0001" placeholder="heading" id="ce_stash_w">
+            <button class="btn sm" onclick="grabCoordsEdit('stash')" type="button">📍 موقعي</button>
+            <button class="btn sm clear" onclick="clearCoordEdit('stash')" type="button">🗑️</button>
+        </div>
+        <div id="ceditCraftRow" style="display:none;grid-template-columns:90px 1fr 1fr 1fr 1fr auto auto;gap:6px;align-items:center;margin-bottom:6px">
+            <span class="lbl">تصنيع *</span>
+            <input type="number" step="0.0001" placeholder="x" id="ce_crafting_x">
+            <input type="number" step="0.0001" placeholder="y" id="ce_crafting_y">
+            <input type="number" step="0.0001" placeholder="z" id="ce_crafting_z">
+            <input type="number" step="0.0001" placeholder="heading" id="ce_crafting_w">
+            <button class="btn sm" onclick="grabCoordsEdit('crafting')" type="button">📍 موقعي</button>
+            <button class="btn sm clear" onclick="clearCoordEdit('crafting')" type="button">🗑️</button>
+        </div>
+        <button class="btn green" style="margin-top:12px;width:100%" onclick="saveShopCoords()">✔ حفظ الإحداثيات</button>
+    </div>
+    <div class="view" id="view-alicense">
+        <div class="sec-title">توقيع وتسليم رخصة سلاح (من الإدارة)</div>
+        <div class="form-grid" style="margin-bottom:14px">
+            <div class="fld"><label>ID اللاعب</label><input type="number" id="alicId" placeholder="ID"></div>
+            <div class="fld"><label>التوقيع</label><input type="text" id="alicSig" placeholder="التوقيع" maxlength="50"></div>
+        </div>
+        <button class="btn gold" style="width:100%" onclick="adminIssueLic()">✒️ توقيع وتسليم</button>
+        <div class="empty" style="margin-top:14px">الرخصة تُسجّل باسم "إدارة السيرفر" وتكون صالحة للشراء من كل متاجر الأسلحة</div>
+    </div>
+    ${adminsHtml}`;
+
+    show();
+    switchTab(keep && STATE.tab ? STATE.tab : 'ashops');
+    toggleCraftRow();
+}
+
+function toggleCraftRow() {
+    const el = $('#craftRow');
+    if (el) el.style.display = $('#newType').value === 'weapon' ? 'block' : 'none';
+}
+async function grabCoords(key) {
+    const r = await post('getMyCoords');
+    const c = await r.json();
+    $('#c_' + key + '_x').value = c.x.toFixed(4);
+    $('#c_' + key + '_y').value = c.y.toFixed(4);
+    $('#c_' + key + '_z').value = c.z.toFixed(4);
+    $('#c_' + key + '_w').value = c.w.toFixed(4);
+}
+function clearCoord(key) {
+    requestAnimationFrame(() => {
+        $('#c_' + key + '_x').value = '';
+        $('#c_' + key + '_y').value = '';
+        $('#c_' + key + '_z').value = '';
+        $('#c_' + key + '_w').value = '';
+    });
+}
+async function grabCoordsEdit(key) {
+    try {
+        const r = await post('getMyCoords');
+        const c = await r.json();
+        $('#ce_' + key + '_x').value = c.x.toFixed(4);
+        $('#ce_' + key + '_y').value = c.y.toFixed(4);
+        $('#ce_' + key + '_z').value = c.z.toFixed(4);
+        $('#ce_' + key + '_w').value = c.w.toFixed(4);
+    } catch (e) {
+        console.error('Error grabbing coords:', e);
+    }
+}
+function clearCoordEdit(key) {
+    requestAnimationFrame(() => {
+        $('#ce_' + key + '_x').value = '';
+        $('#ce_' + key + '_y').value = '';
+        $('#ce_' + key + '_z').value = '';
+        $('#ce_' + key + '_w').value = '';
+    });
+}
+function readCoord(key) {
+    const x = parseFloat($('#c_' + key + '_x').value);
+    const y = parseFloat($('#c_' + key + '_y').value);
+    const z = parseFloat($('#c_' + key + '_z').value);
+    const w = parseFloat($('#c_' + key + '_w').value) || 0;
+    if (isNaN(x) || isNaN(y) || isNaN(z)) return null;
+    return { x, y, z, w };
+}
+function createShop() {
+    const type = $('#newType').value;
+    const coords = {};
+    for (const k of ['seller', 'buyer', 'stash']) {
+        const c = readCoord(k);
+        if (!c) return;
+        coords[k] = c;
+    }
+    if (type === 'weapon') {
+        const c = readCoord('crafting');
+        if (!c) return;
+        coords.crafting = c;
+    }
+    post('adminCreateShop', { type, label: $('#newLabel').value || 'Shop', coords });
+}
+function setOwner(id)   { const v = $('#own_' + id).value; if (v) post('adminSetOwner', { id, targetId: v }); }
+function clearOwner(id) { post('adminSetOwner', { id, targetId: 0 }); }
+function delShop(id)    { post('adminDeleteShop', { id }); }
+function addAdmin()     { const v = $('#admId').value.trim(); if (v) { post('adminAddAdmin', { input: v }); $('#admId').value = ''; } }
+function adminIssueLic(){ const id = $('#alicId').value, sig = $('#alicSig').value.trim(); if (!id || !sig) return; post('adminIssueLicense', { targetId: id, signature: sig }); $('#alicId').value = ''; $('#alicSig').value = ''; }
+function rmAdmin(ident) { post('adminRemoveAdmin', { identifier: ident }); }
+
+function editShopCoords(id) {
+    const shop = STATE.data.shops.find(s => s.id == id);
+    if (!shop) return;
+    STATE.editShopId = id;
+    STATE.editMode = true;
+    const c = shop.coords || {};
+    
+    // Pre-fill edit form
+    setTimeout(() => {
+        if (c.seller)   { $('#ce_seller_x').value = c.seller.x; $('#ce_seller_y').value = c.seller.y; $('#ce_seller_z').value = c.seller.z; $('#ce_seller_w').value = c.seller.w || 0; }
+        if (c.buyer)    { $('#ce_buyer_x').value = c.buyer.x; $('#ce_buyer_y').value = c.buyer.y; $('#ce_buyer_z').value = c.buyer.z; $('#ce_buyer_w').value = c.buyer.w || 0; }
+        if (c.stash)    { $('#ce_stash_x').value = c.stash.x; $('#ce_stash_y').value = c.stash.y; $('#ce_stash_z').value = c.stash.z; $('#ce_stash_w').value = c.stash.w || 0; }
+        if (c.crafting) { $('#ce_crafting_x').value = c.crafting.x; $('#ce_crafting_y').value = c.crafting.y; $('#ce_crafting_z').value = c.crafting.z; $('#ce_crafting_w').value = c.crafting.w || 0; }
+        const craftRow = $('#ceditCraftRow');
+        if (craftRow) craftRow.style.display = shop.type === 'weapon' ? 'block' : 'none';
+    }, 50);
+    
+    switchTab('acedit');
+}
+
+async function saveShopCoords() {
+    const shopId = STATE.editShopId;
+    const shop = STATE.data.shops.find(s => s.id == shopId);
+    if (!shop) return;
+    
+    const coords = {};
+    for (const k of ['seller', 'buyer', 'stash']) {
+        const x = parseFloat($('#ce_' + k + '_x').value);
+        const y = parseFloat($('#ce_' + k + '_y').value);
+        const z = parseFloat($('#ce_' + k + '_z').value);
+        const w = parseFloat($('#ce_' + k + '_w').value) || 0;
+        if (isNaN(x) || isNaN(y) || isNaN(z)) {
+            return;
+        }
+        coords[k] = { x, y, z, w };
+    }
+    
+    if (shop.type === 'weapon') {
+        const x = parseFloat($('#ce_crafting_x').value);
+        const y = parseFloat($('#ce_crafting_y').value);
+        const z = parseFloat($('#ce_crafting_z').value);
+        const w = parseFloat($('#ce_crafting_w').value) || 0;
+        if (isNaN(x) || isNaN(y) || isNaN(z)) {
+            return;
+        }
+        coords.crafting = { x, y, z, w };
+    }
+    
+    try {
+        const res = await post('adminUpdateShopCoords', { shopId: parseInt(shopId), coords });
+        if (res.ok) {
+            STATE.editMode = false;
+            STATE.editShopId = null;
+            switchTab('ashops');
+        }
+    } catch (err) {
+        console.error('Save error:', err);
+    }
+}
+</script>
+</body>
+</html>
