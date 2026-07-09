@@ -40,7 +40,7 @@ function applyTranslations() {
     $("t-charinfo-header").textContent = t("charinfo_header");
     $("t-charinfo-description").textContent = t("charinfo_description");
     $("t-play").textContent = t("play_button");
-    $("t-delete").textContent = t("delete_button");
+    $("btn-delete").title = t("delete_button");
     $("t-register-header").textContent = t("chardel_header");
     $("l-firstname").textContent = t("firstname");
     $("l-lastname").textContent = t("lastname");

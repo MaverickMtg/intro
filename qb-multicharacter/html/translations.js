@@ -8,6 +8,19 @@ class TranslationManager {
         this.translations = {};
         this.fallbacks = {
             // Default English fallbacks for common keys
+            characters_header: "My Characters",
+            charinfo_header: "Character Information",
+            charinfo_description: "Select a character slot to see all information about your character.",
+            emptyslot: "Empty Slot",
+            play_button: "Play",
+            delete_button: "Delete",
+            job: "Job",
+            jobgrade: "Job Grade",
+            cash: "Cash",
+            bank: "Bank",
+            phonenumber: "Phone Number",
+            accountnumber: "Account Number",
+            deletechar_header: "Delete Character",
             deletechar_description: "Are you sure you want to delete this character?",
             confirm: "Confirm",
             cancel: "Cancel",

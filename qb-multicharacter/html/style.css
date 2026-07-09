@@ -473,6 +473,7 @@ body {
     padding: 20px 18px;
     gap: 18px;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .detail-name {
@@ -581,6 +582,9 @@ body {
 .btn-play:hover { box-shadow: 0 0 34px rgba(0, 229, 255, 0.75); }
 
 .btn-delete {
+    flex: 0 0 auto;
+    width: 48px;
+    padding: 13px 0;
     background: transparent;
     border-color: var(--danger);
     color: var(--danger);
