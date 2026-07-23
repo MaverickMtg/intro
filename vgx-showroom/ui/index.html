@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VGX Showroom</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     MAIN SHOWROOM UI
+══════════════════════════════════════════════════ -->
+<div id="mainApp" class="app hidden">
+  <div class="panel">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <button class="x-btn" onclick="closeMain()"><i class="fas fa-times"></i></button>
+
+      <nav class="nav">
+        <button class="nav-btn active" onclick="switchMain('slots')" id="nav-slots">
+          <i class="fas fa-warehouse"></i><span>Showroom</span>
+        </button>
+        <button class="nav-btn" onclick="switchMain('addVehicle')" id="nav-addVehicle" style="display:none">
+          <i class="fas fa-plus-circle"></i><span>Add Vehicle</span>
+        </button>
+        <button class="nav-btn" onclick="switchMain('staff')" id="nav-staff" style="display:none">
+          <i class="fas fa-user-shield"></i><span>Staff</span>
+        </button>
+        <button class="nav-btn" onclick="switchMain('treasury')" id="nav-treasury" style="display:none">
+          <i class="fas fa-vault"></i><span>Treasury</span>
+        </button>
+        <button class="nav-btn" onclick="switchMain('sales')" id="nav-sales" style="display:none">
+          <i class="fas fa-chart-line"></i><span>Sales Log</span>
+        </button>
+      </nav>
+
+      <div class="brand">
+        <div class="brand-text">
+          <div class="brand-name" id="brandName">Legacy Motors</div>
+          <div class="brand-sub">Private Showroom</div>
+        </div>
+        <div class="brand-logo"><i class="fas fa-car-side"></i></div>
+      </div>
+    </div>
+
+    <div class="body">
+
+      <!-- Main content -->
+      <div class="content">
+
+        <!-- SLOTS -->
+        <div class="page active" id="page-slots">
+          <div class="searchbar">
+            <i class="fas fa-search"></i>
+            <input type="text" id="slotSearch" placeholder="Search: vehicle name / plate..." oninput="renderSlots()"/>
+            <span class="search-meta" id="slotCountLabel"></span>
+          </div>
+          <div class="slots-grid" id="slotsGrid"></div>
+        </div>
+
+        <!-- ADD VEHICLE -->
+        <div class="page" id="page-addVehicle">
+          <div class="section-title"><i class="fas fa-car"></i> Your garage vehicles</div>
+          <div class="veh-pick-list" id="myVehiclesList"></div>
+
+          <div class="form-card hidden" id="addVehicleForm">
+            <div class="section-title"><i class="fas fa-tags"></i> Listing details</div>
+            <div class="form-grid">
+              <div class="field">
+                <label>Display name</label>
+                <input type="text" id="addLabel" placeholder="e.g. Sultan RS"/>
+              </div>
+              <div class="field">
+                <label>Price ($)</label>
+                <input type="number" id="addPrice" min="0" placeholder="0"/>
+              </div>
+              <div class="field">
+                <label>Slot</label>
+                <select id="addSlotSelect"></select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-ghost" onclick="cancelAddVehicle()">Cancel</button>
+              <button class="btn btn-accent" onclick="submitAddVehicle()"><i class="fas fa-check"></i> List vehicle</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STAFF -->
+        <div class="page" id="page-staff">
+          <div class="row-between">
+            <div class="section-title"><i class="fas fa-users"></i> Showroom staff</div>
+            <button class="btn btn-accent btn-sm" id="hireBtn" onclick="openHirePanel()"><i class="fas fa-user-plus"></i> Hire</button>
+          </div>
+
+          <div class="form-card hidden" id="hirePanel">
+            <div class="form-grid">
+              <div class="field">
+                <label>Online player</label>
+                <select id="hirePlayerSelect"></select>
+              </div>
+              <div class="field">
+                <label>Role</label>
+                <select id="hireRole">
+                  <option value="manager">Manager</option>
+                  <option value="employee" selected>Employee</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-ghost" onclick="closeHirePanel()">Cancel</button>
+              <button class="btn btn-accent" onclick="submitHire()"><i class="fas fa-check"></i> Hire</button>
+            </div>
+          </div>
+
+          <div class="staff-list" id="staffList"></div>
+        </div>
+
+        <!-- SALES -->
+        <div class="page" id="page-sales">
+          <div class="section-title"><i class="fas fa-receipt"></i> Recent sales</div>
+          <div class="sales-list" id="salesList"></div>
+        </div>
+
+        <!-- TREASURY -->
+        <div class="page" id="page-treasury">
+          <div class="treasury-balance-card">
+            <div class="treasury-label">SHOWROOM TREASURY</div>
+            <div class="treasury-amount" id="treasuryBalance">$0</div>
+            <div class="treasury-sub">Tax &amp; commission from every sale pools here</div>
+          </div>
+
+          <div class="treasury-actions">
+            <div class="form-card treasury-box">
+              <div class="section-title"><i class="fas fa-arrow-up-from-bracket"></i> Withdraw to bank</div>
+              <div class="field">
+                <label>Amount ($)</label>
+                <input type="number" id="withdrawAmount" min="1" placeholder="0"/>
+              </div>
+              <button class="btn btn-accent full" onclick="treasuryDo('withdraw')"><i class="fas fa-money-bill-transfer"></i> Withdraw</button>
+            </div>
+
+            <div class="form-card treasury-box">
+              <div class="section-title"><i class="fas fa-arrow-down-to-bracket"></i> Deposit from bank</div>
+              <div class="field">
+                <label>Amount ($)</label>
+                <input type="number" id="depositAmount" min="1" placeholder="0"/>
+              </div>
+              <button class="btn btn-ghost full" onclick="treasuryDo('deposit')"><i class="fas fa-piggy-bank"></i> Deposit</button>
+            </div>
+          </div>
+
+          <div class="section-title"><i class="fas fa-clock-rotate-left"></i> Treasury history</div>
+          <div class="treasury-log" id="treasuryLog"></div>
+        </div>
+
+
+      </div>
+
+      <!-- Right sidebar (stats) -->
+      <aside class="sidebar">
+        <div class="stat-hero">
+          <div class="stat-hero-value"><b id="statListedCount">0</b> / <span id="statSlotTotal">0</span></div>
+          <div class="stat-hero-bar"><div class="stat-hero-fill" id="statSlotFill"></div></div>
+          <div class="stat-hero-label">vehicles on display</div>
+        </div>
+
+        <div class="side-section-label">Statistics</div>
+        <div class="stat-card">
+          <div class="stat-value accent" id="statTotalSales">0</div>
+          <div class="stat-label">vehicles sold</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value green" id="statRevenue">$0</div>
+          <div class="stat-label">total revenue</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value gold" id="statTaxes">$0</div>
+          <div class="stat-label">tax collected</div>
+        </div>
+
+        <div class="side-section-label">Access</div>
+        <div class="stat-card role-card">
+          <span class="badge" id="roleBadge">Visitor</span>
+          <div class="stat-label">your role</div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     INSPECT VEHICLE
+══════════════════════════════════════════════════ -->
+<div id="inspectApp" class="app hidden">
+  <div class="inspect-panel">
+    <div class="topbar slim">
+      <button class="x-btn" onclick="closeInspect()"><i class="fas fa-arrow-left"></i></button>
+      <div class="inspect-head">
+        <span class="chip" id="inspectClass">Vehicle</span>
+        <div class="inspect-title" id="inspectName">—</div>
+        <div class="inspect-sub"><span id="inspectModel"></span> &bull; <span id="inspectPlate"></span></div>
+      </div>
+      <div class="brand-logo"><i class="fas fa-car-side"></i></div>
+    </div>
+
+    <div class="inspect-body">
+      <div class="inspect-col">
+        <div class="price-card">
+          <div class="price-value" id="inspectPrice">$0</div>
+          <div class="price-sub" id="inspectTotal"></div>
+        </div>
+
+        <div class="section-title"><i class="fas fa-gauge-high"></i> Performance</div>
+        <div class="stats-grid">
+          <div class="mini-stat"><i class="fas fa-tachometer-alt"></i><span id="statSpeed">N/A</span><label>Top speed</label></div>
+          <div class="mini-stat"><i class="fas fa-cogs"></i><span id="statEngine">Stock</span><label>Engine</label></div>
+          <div class="mini-stat"><i class="fas fa-gears"></i><span id="statTrans">Stock</span><label>Transmission</label></div>
+          <div class="mini-stat"><i class="fas fa-car-burst"></i><span id="statSuspension">Stock</span><label>Suspension</label></div>
+          <div class="mini-stat"><i class="fas fa-circle-stop"></i><span id="statBrakes">Stock</span><label>Brakes</label></div>
+          <div class="mini-stat"><i class="fas fa-wind"></i><span id="statTurbo">No</span><label>Turbo</label></div>
+        </div>
+      </div>
+
+      <div class="inspect-col">
+        <div class="section-title"><i class="fas fa-list"></i> Details</div>
+        <div class="detail-list" id="detailList"></div>
+
+        <button class="btn btn-buy" id="buyBtn" onclick="confirmBuy()"></button>
+
+        <div class="staff-actions hidden" id="staffInspectActions">
+          <button class="btn btn-ghost" onclick="openSetPrice()"><i class="fas fa-tag"></i> Set price</button>
+          <button class="btn btn-ghost" onclick="openChangeSlot()"><i class="fas fa-arrows-up-down-left-right"></i> Change slot</button>
+          <button class="btn btn-danger" onclick="confirmRemove()"><i class="fas fa-trash"></i> Remove</button>
+        </div>
+
+        <div class="form-card hidden" id="setPriceBox">
+          <div class="field">
+            <label>New price ($)</label>
+            <input type="number" id="newPriceInput" min="0"/>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-ghost btn-sm" onclick="cancelSetPrice()">Cancel</button>
+            <button class="btn btn-accent btn-sm" onclick="submitPrice()"><i class="fas fa-check"></i> Save</button>
+          </div>
+        </div>
+
+        <div class="form-card hidden" id="changeSlotBox">
+          <div class="field">
+            <label>Move to slot</label>
+            <select id="newSlotSelect"></select>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-ghost btn-sm" onclick="cancelChangeSlot()">Cancel</button>
+            <button class="btn btn-accent btn-sm" onclick="submitChangeSlot()"><i class="fas fa-check"></i> Move</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     ADMIN PANEL (/showrooms) — create everything in-game
+══════════════════════════════════════════════════ -->
+<div id="adminApp" class="app hidden">
+  <div class="panel">
+
+    <div class="topbar">
+      <button class="x-btn" onclick="closeAdmin()"><i class="fas fa-times"></i></button>
+
+      <nav class="nav">
+        <button class="nav-btn active" onclick="switchAdmin('list')" id="anav-list">
+          <i class="fas fa-warehouse"></i><span>Showrooms</span>
+        </button>
+        <button class="nav-btn" onclick="switchAdmin('create')" id="anav-create">
+          <i class="fas fa-plus-circle"></i><span>Create Showroom</span>
+        </button>
+        <button class="nav-btn" onclick="switchAdmin('admins')" id="anav-admins" style="display:none">
+          <i class="fas fa-user-shield"></i><span>Admins</span>
+        </button>
+      </nav>
+
+      <div class="brand">
+        <div class="brand-text">
+          <div class="brand-name">Showroom Admin</div>
+          <div class="brand-sub">Create everything in-game</div>
+        </div>
+        <div class="brand-logo"><i class="fas fa-screwdriver-wrench"></i></div>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="content">
+
+        <!-- SHOWROOM LIST -->
+        <div class="page active" id="apage-list">
+          <div class="section-title"><i class="fas fa-warehouse"></i> Existing showrooms</div>
+          <div class="admin-sr-list" id="adminSrList"></div>
+        </div>
+
+        <!-- CREATE SHOWROOM -->
+        <div class="page" id="apage-create">
+          <div class="form-card">
+            <div class="section-title"><i class="fas fa-signature"></i> Showroom name</div>
+            <div class="field">
+              <input type="text" id="createName" maxlength="80" placeholder="e.g. Legacy Motors"/>
+            </div>
+          </div>
+
+          <div class="form-card">
+            <div class="section-title"><i class="fas fa-location-dot"></i> Interaction points — stand at each spot and press Capture</div>
+            <div class="point-rows" id="createPointRows"></div>
+          </div>
+
+          <div class="form-card">
+            <div class="row-between">
+              <div class="section-title" style="margin-bottom:0"><i class="fas fa-square-parking"></i> Vehicle parking slots</div>
+              <button class="btn btn-accent btn-sm" onclick="captureCreateSlot()"><i class="fas fa-crosshairs"></i> Capture slot at my position</button>
+            </div>
+            <div class="hint-note">Tip: sit in a vehicle parked exactly how you want display cars to face — the capture uses the vehicle's position and heading.</div>
+            <div class="slot-chip-list" id="createSlotList"></div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-ghost" onclick="resetCreateForm()">Reset</button>
+            <button class="btn btn-accent" onclick="submitCreateShowroom()"><i class="fas fa-check"></i> Create Showroom</button>
+          </div>
+        </div>
+
+        <!-- EDIT POINTS -->
+        <div class="page" id="apage-editpoints">
+          <div class="form-card">
+            <div class="section-title"><i class="fas fa-location-dot"></i> Edit points — <span id="editPointsTitle"></span></div>
+            <div class="point-rows" id="editPointRows"></div>
+            <div class="form-actions">
+              <button class="btn btn-ghost" onclick="switchAdmin('list')">Cancel</button>
+              <button class="btn btn-accent" onclick="submitEditPoints()"><i class="fas fa-check"></i> Save Points</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ADMINS -->
+        <div class="page" id="apage-admins">
+          <div class="form-card">
+            <div class="section-title"><i class="fas fa-user-plus"></i> Add showroom admin</div>
+            <div class="row-between" style="gap:10px">
+              <div class="field" style="flex:1">
+                <input type="text" id="adminAddInput" placeholder="Online server ID / Discord ID / license:xxxx"/>
+              </div>
+              <button class="btn btn-accent" onclick="submitAddAdmin()"><i class="fas fa-plus"></i> Add</button>
+            </div>
+          </div>
+          <div class="section-title"><i class="fas fa-users"></i> Current admins</div>
+          <div class="staff-list" id="adminAdminList"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     CONFIRM OVERLAY
+══════════════════════════════════════════════════ -->
+<div id="confirmOverlay" class="overlay hidden">
+  <div class="confirm-box">
+    <div class="confirm-icon"><i class="fas fa-circle-question"></i></div>
+    <div class="confirm-title" id="confirmTitle">Are you sure?</div>
+    <div class="confirm-sub" id="confirmSub"></div>
+    <div class="form-actions center">
+      <button class="btn btn-ghost" onclick="cancelConfirm()">Cancel</button>
+      <button class="btn btn-accent" id="confirmOkBtn"><i class="fas fa-check"></i> Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
