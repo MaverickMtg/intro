@@ -93,8 +93,10 @@ local Counters = {
   SetDuiUrl = 0,
   AddReplaceTexture = 0,
   RemoveReplaceTexture = 0,
+  SendDuiMessage = 0,
 }
 local duiUrls = {} -- duiObj -> current url (for assertions)
+local duiCreateUrls = {} -- duiObj -> url it was CreateDui()'d with (catches the blank-then-navigate race)
 local nextHandle = 1
 
 function CreateRuntimeTxd(_)
@@ -108,6 +110,7 @@ function CreateDui(url, _, _)
   nextHandle = nextHandle + 1
   local handle = nextHandle
   duiUrls[handle] = url
+  duiCreateUrls[handle] = url
   return handle
 end
 
@@ -130,7 +133,11 @@ function DestroyDui(duiObj)
 end
 
 function IsDuiAvailable(duiObj) return duiUrls[duiObj] ~= nil end
-function SendDuiMessage(_, _) end
+local lastDuiMessage = nil
+function SendDuiMessage(duiObj, msg)
+  Counters.SendDuiMessage = Counters.SendDuiMessage + 1
+  lastDuiMessage = msg
+end
 
 function AddReplaceTexture(_, _, _, _) Counters.AddReplaceTexture = Counters.AddReplaceTexture + 1 end
 function RemoveReplaceTexture(_, _) Counters.RemoveReplaceTexture = Counters.RemoveReplaceTexture + 1 end
@@ -192,10 +199,17 @@ local function setPlayerAt(coords) playerCoords = coords end
 
 print('[1] Player walks into screen range -> DUIs created exactly once per target')
 setPlayerAt(LOBBY_COORDS)
-tick(2, 3000) -- let the scan-loop thread run at least one iteration
+tick(20, 100) -- run scan loop + let the 1200ms/100ms delayed "send initial state" threads complete
 check(Counters.CreateDui == 5, 'CreateDui called exactly once per of the 5 targets (got ' .. Counters.CreateDui .. ')')
 check(Counters.CreateRuntimeTxd == 5, 'CreateRuntimeTxd called exactly once per target (got ' .. Counters.CreateRuntimeTxd .. ')')
 check(Counters.AddReplaceTexture == 5, 'AddReplaceTexture applied for all 5 targets')
+check(Counters.SetDuiUrl == 0, 'no extra SetDuiUrl navigation on first creation (created directly with final URL, no blank-then-navigate race)')
+local anyCreatedBlank = false
+for _, u in pairs(duiCreateUrls) do
+  if u == 'about:blank' then anyCreatedBlank = true end
+end
+check(not anyCreatedBlank, 'new DUIs were created directly with their real content URL, never with about:blank')
+check(Counters.SendDuiMessage >= 5, 'initial playlist/mute/volume state WAS pushed to all 5 newly-created screens (got ' .. Counters.SendDuiMessage .. ')')
 local createDuiAfterFirstShow = Counters.CreateDui
 local createTxdAfterFirstShow = Counters.CreateRuntimeTxd
 
@@ -207,9 +221,10 @@ check(Counters.RemoveReplaceTexture == 5, 'RemoveReplaceTexture called for all 5
 check(Counters.SetDuiUrl >= 5, 'DUIs navigated to about:blank while hidden (SetDuiUrl called)')
 
 print('\n[3] Player walks back into range repeatedly (5x) -> resources REUSED, not recreated')
+local sendMessageBeforeReentry = Counters.SendDuiMessage
 for i = 1, 5 do
   setPlayerAt(LOBBY_COORDS)
-  tick(2, 3000)
+  tick(20, 100)
   setPlayerAt(FAR_COORDS)
   tick(2, 3000)
 end
@@ -218,6 +233,9 @@ check(Counters.CreateDui == createDuiAfterFirstShow,
 check(Counters.CreateRuntimeTxd == createTxdAfterFirstShow,
   'CreateRuntimeTxd count unchanged after 5 more in/out cycles (still ' .. Counters.CreateRuntimeTxd .. ') -- NO leak')
 check(Counters.DestroyDui == 0, 'DestroyDui still never called across repeated show/hide cycles')
+check(Counters.SendDuiMessage >= sendMessageBeforeReentry + 5 * 5,
+  'screens keep receiving fresh playlist/state pushes on every re-entry, not just the first time (got ' ..
+  (Counters.SendDuiMessage - sendMessageBeforeReentry) .. ' new messages across 5 re-entries x 5 targets)')
 
 print('\n[4] Admin changes a shown screen\'s URL -> navigated in place, no CreateDui')
 setPlayerAt(LOBBY_COORDS)
@@ -232,9 +250,24 @@ end)
 check(ok, 'set-screen-url NUI callback executed without error' .. (ok and '' or (': ' .. tostring(err))))
 check(Counters.CreateDui == createDuiBeforeEdit, 'Changing a live screen URL did not call CreateDui again (reused existing DUI)')
 
-print('\n[5] Resource stop -> full teardown, all DUIs destroyed exactly once')
+print('\n[5] A transient error in the scan loop does not permanently freeze all screens')
+setPlayerAt(FAR_COORDS)
+tick(2, 3000) -- hide everything first
+local destroyCountBeforeError = Counters.DestroyDui
+local realPlayerPedId = PlayerPedId
+PlayerPedId = function() error('simulated native failure') end
+setPlayerAt(LOBBY_COORDS)
+local ok = pcall(function() tick(2, 3000) end)
+check(ok, 'the error inside the scan loop did not propagate out and crash the test/resource')
+check(Counters.CreateDui == createDuiAfterFirstShow, 'no screens were (incorrectly) shown while the native call was failing')
+PlayerPedId = realPlayerPedId
+tick(20, 100) -- next tick: the native works again, scan loop should recover on its own
+check(Counters.SendDuiMessage > sendMessageBeforeReentry + 5 * 6,
+  'scan loop RECOVERED on the next tick and correctly showed screens again after the transient error')
+
+print('\n[6] Resource stop -> full teardown, all DUIs destroyed exactly once')
 trigger('onResourceStop', 'FL-Screens')
-check(Counters.DestroyDui == 5, 'DestroyDui called exactly once per target on resource stop (got ' .. Counters.DestroyDui .. ')')
+check(Counters.DestroyDui == destroyCountBeforeError + 5, 'DestroyDui called exactly once per target on resource stop (got ' .. (Counters.DestroyDui - destroyCountBeforeError) .. ')')
 
 print(('\n=== RESULT: %d passed, %d failed ===\n'):format(pass, fail))
 os.exit(fail == 0 and 0 or 1)

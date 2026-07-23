@@ -157,9 +157,11 @@ end
 
 
 -- Returns the persistent DUI/texture resource for a screen slot, creating it
--- (once) if needed. The DUI starts on 'about:blank' — cheap to render and a
--- safe default until the first real navigation happens.
-local function GetOrCreateScreenResource(screenKey, width, height)
+-- (once) if needed. New resources are created DIRECTLY with initialUrl
+-- (exactly like the original code did) rather than 'about:blank' followed by
+-- an immediate SetDuiUrl — avoids racing the freshly-created (not-yet-ready)
+-- DUI with a navigation call.
+local function GetOrCreateScreenResource(screenKey, width, height, initialUrl)
     local res = ScreenResources[screenKey]
     if res then return res, false end
 
@@ -167,7 +169,7 @@ local function GetOrCreateScreenResource(screenKey, width, height)
     local txnName = 'txn_' .. screenKey
 
     local txd = CreateRuntimeTxd(txdName)
-    local duiObj = CreateDui('about:blank', width, height)
+    local duiObj = CreateDui(initialUrl, width, height)
     local dui = GetDuiHandle(duiObj)
     local tx = CreateRuntimeTextureFromDuiHandle(txd, txnName, dui)
 
@@ -179,37 +181,31 @@ local function GetOrCreateScreenResource(screenKey, width, height)
         txnName = txnName,
         width = width,
         height = height,
-        currentUrl = 'about:blank', -- the fully-wrapped URL actually loaded in the DUI
-        rawUrl = nil,               -- the underlying content URL (pre-wrapping), for change detection
+        currentUrl = initialUrl, -- the fully-wrapped URL actually loaded in the DUI
+        rawUrl = nil,            -- the underlying content URL (pre-wrapping), for change detection
         shown = false,
     }
     ScreenResources[screenKey] = res
     return res, true
 end
 
--- Navigates an existing DUI in place (SetDuiUrl) instead of destroying and
--- recreating it. No-ops if the DUI is already showing this exact URL.
-local function NavigateScreenResource(res, screenKey, finalUrl, isDirectNui, fallbackUrls, fallbackMuted)
-    if res.currentUrl == finalUrl then return end
-    res.currentUrl = finalUrl
-    SetDuiUrl(res.duiObj, finalUrl)
-
-    if isDirectNui then return end
-
+-- Waits for the (re)loaded DUI page to be ready, then pushes the current
+-- playlist/mute/volume/marquee state to it. Guards against the resource
+-- having navigated elsewhere again in the meantime.
+local function SendScreenStateWhenReady(res, screenKey, expectedUrl, fallbackUrls, fallbackMuted)
     Citizen.CreateThread(function()
         Citizen.Wait(1200) -- Wait for React to be ready
 
-        -- Bail out if this screen has since navigated elsewhere.
-        if ScreenResources[screenKey] ~= res or res.currentUrl ~= finalUrl then return end
+        if ScreenResources[screenKey] ~= res or res.currentUrl ~= expectedUrl then return end
 
         local retries = 0
         while not IsDuiAvailable(res.duiObj) and retries < 10 do
             Citizen.Wait(100)
             retries = retries + 1
-            if ScreenResources[screenKey] ~= res or res.currentUrl ~= finalUrl then return end
+            if ScreenResources[screenKey] ~= res or res.currentUrl ~= expectedUrl then return end
         end
 
-        if IsDuiAvailable(res.duiObj) and res.currentUrl == finalUrl then
+        if IsDuiAvailable(res.duiObj) and res.currentUrl == expectedUrl then
             -- Re-fetch latest data in case it arrived during the wait
             local finalUrls = fallbackUrls
             local finalInterval = 10000
@@ -232,6 +228,24 @@ local function NavigateScreenResource(res, screenKey, finalUrl, isDirectNui, fal
             }))
         end
     end)
+end
+
+-- Navigates an existing DUI in place (SetDuiUrl) instead of destroying and
+-- recreating it, unless it's already showing this exact URL. `isFreshResource`
+-- forces the initial playlist push even when no navigation happened (i.e. the
+-- resource/DUI was just created with this URL directly).
+local function NavigateScreenResource(res, screenKey, finalUrl, isDirectNui, fallbackUrls, fallbackMuted, isFreshResource)
+    local navigated = res.currentUrl ~= finalUrl
+    if navigated then
+        res.currentUrl = finalUrl
+        SetDuiUrl(res.duiObj, finalUrl)
+    end
+
+    if isDirectNui then return end
+
+    if navigated or isFreshResource then
+        SendScreenStateWhenReady(res, screenKey, finalUrl, fallbackUrls, fallbackMuted)
+    end
 end
 
 local function ShowScreen(screenInfo)
@@ -269,11 +283,6 @@ local function ShowScreen(screenInfo)
         local width = (type(targetData) == 'table' and targetData.Width) or modelData.Width or 1920
         local height = (type(targetData) == 'table' and targetData.Height) or modelData.Height or 1080
 
-        local res, isNew = GetOrCreateScreenResource(screenKey, width, height)
-        if isNew then anyNewResource = true end
-        res.shown = true
-        res.rawUrl = url
-
         -- Use playlist or single url for initial DUI load
         local initialUrls = {}
         if ScreensData[screenKey] and ScreensData[screenKey].urls then
@@ -294,7 +303,12 @@ local function ShowScreen(screenInfo)
             end
         end
 
-        NavigateScreenResource(res, screenKey, finalUrl, isDirectNui, initialUrls, isMuted)
+        local res, isNew = GetOrCreateScreenResource(screenKey, width, height, finalUrl)
+        if isNew then anyNewResource = true end
+        res.shown = true
+        res.rawUrl = url
+
+        NavigateScreenResource(res, screenKey, finalUrl, isDirectNui, initialUrls, isMuted, isNew)
 
         debugPrint("^2[FL-Screens] Showing target: " ..
             tostring(target) .. " | Resolution: " .. width .. "x" .. height .. " | URL: " .. tostring(url) .. "^0")
@@ -507,41 +521,50 @@ Citizen.CreateThread(function()
     Citizen.Wait(500)
 
     while true do
-        local pcoords = GetEntityCoords(PlayerPedId())
-        local moved = #(pcoords - lastScanCoords) > MOVEMENT_THRESHOLD
-        local hasActiveScreens = next(ActiveScreens) ~= nil
+        -- Never let a single unexpected error (e.g. a bad Config entry, a
+        -- stopped dependency) kill this thread: that would freeze every
+        -- screen in whatever state it was last in, forever. Log and keep going.
+        local ok, err = pcall(function()
+            local pcoords = GetEntityCoords(PlayerPedId())
+            local moved = #(pcoords - lastScanCoords) > MOVEMENT_THRESHOLD
+            local hasActiveScreens = next(ActiveScreens) ~= nil
 
-        -- Only do full scan if player moved enough OR if no screens are active yet
-        if moved or not hasActiveScreens then
-            lastScanCoords = pcoords
+            -- Only do full scan if player moved enough OR if no screens are active yet
+            if moved or not hasActiveScreens then
+                lastScanCoords = pcoords
 
-            -- Use inner range for new screen creation (hysteresis)
-            local screens = GetScreensInRange(true)
-            local currentInRangeKeys = {}
-            -- Show new screens (sorted by distance, closest first)
-            for _, screenInfo in ipairs(screens) do
-                local key = screenInfo.key
-                currentInRangeKeys[key] = true
-                if not ActiveScreens[key] then
-                    debugPrint("^2[FL-Screens] Screen " .. key .. " is in range. Showing...^0")
-                    ShowScreen(screenInfo)
+                -- Use inner range for new screen creation (hysteresis)
+                local screens = GetScreensInRange(true)
+                local currentInRangeKeys = {}
+                -- Show new screens (sorted by distance, closest first)
+                for _, screenInfo in ipairs(screens) do
+                    local key = screenInfo.key
+                    currentInRangeKeys[key] = true
+                    if not ActiveScreens[key] then
+                        debugPrint("^2[FL-Screens] Screen " .. key .. " is in range. Showing...^0")
+                        ShowScreen(screenInfo)
+                    end
+                end
+
+                -- Use full range (outer) for cleanup to prevent flickering
+                local screensFullRange = GetScreensInRange(false)
+                local fullRangeKeys = {}
+                for _, screenInfo in ipairs(screensFullRange) do
+                    fullRangeKeys[screenInfo.key] = true
+                end
+
+                -- Hide screens that are out of the full range
+                for key, screenInfo in pairs(ActiveScreens) do
+                    if not fullRangeKeys[key] then
+                        debugPrint("^3[FL-Screens] Screen " .. key .. " is out of range. Hiding...^0")
+                        HideScreen(key)
+                    end
                 end
             end
+        end)
 
-            -- Use full range (outer) for cleanup to prevent flickering
-            local screensFullRange = GetScreensInRange(false)
-            local fullRangeKeys = {}
-            for _, screenInfo in ipairs(screensFullRange) do
-                fullRangeKeys[screenInfo.key] = true
-            end
-
-            -- Hide screens that are out of the full range
-            for key, screenInfo in pairs(ActiveScreens) do
-                if not fullRangeKeys[key] then
-                    debugPrint("^3[FL-Screens] Screen " .. key .. " is out of range. Hiding...^0")
-                    HideScreen(key)
-                end
-            end
+        if not ok then
+            print("^1[FL-Screens] Scan loop error (recovered, screens will resume next tick): " .. tostring(err) .. "^0")
         end
 
         Citizen.Wait(SCAN_INTERVAL)
